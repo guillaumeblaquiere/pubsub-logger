@@ -24,7 +24,7 @@ type PubSubMessage struct {
 	Message struct {
 		Attribute map[string]string `json:"attributes,omitempty"`
 		Data      []byte            `json:"data,omitempty"`
-		ID        string            `json:"id"`
+		ID        string            `json:"messageId"`
 	} `json:"message"`
 	Subscription string `json:"subscription"`
 }
@@ -45,11 +45,13 @@ func HelloPubSub(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "MessageId = %s\n", m.Message.ID)
-	fmt.Fprintf(w, "Subscription = %s\n", m.Subscription)
-	fmt.Fprint(w, "Attributes\n")
+	log.Printf("MessageId = %s\n", m.Message.ID)
+	log.Printf("Subscription = %s\n", m.Subscription)
+	log.Printf("Attributes\n")
 	for k, v := range m.Message.Attribute {
-		fmt.Fprintf(w, "%s=%s\n", k, v)
+		log.Printf("%s=%s\n", k, v)
 	}
-	fmt.Fprintf(w, "Content\n---\n%s\n---\n", m.Message.Data)
+	log.Printf("Content\n---\n%s\n---\n", m.Message.Data)
+
+	w.WriteHeader(http.StatusOK)
 }
