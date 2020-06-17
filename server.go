@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -19,39 +18,22 @@ func main() {
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }
 
-// PubSubMessage is the payload of a Pub/Sub event.
-type PubSubMessage struct {
-	Message struct {
-		Attribute map[string]string `json:"attributes,omitempty"`
-		Data      []byte            `json:"data,omitempty"`
-		ID        string            `json:"messageId"`
-	} `json:"message"`
-	Subscription string `json:"subscription"`
-}
-
 // HelloPubSub receives and processes a Pub/Sub push message.
 func HelloPubSub(w http.ResponseWriter, r *http.Request) {
-	var m PubSubMessage
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("ioutil.ReadAll: %v", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
-	fmt.Println(string(body))
-	if err := json.Unmarshal(body, &m); err != nil {
-		log.Printf("json.Unmarshal: %v", err)
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
+	fmt.Fprint(w, "headers\n")
+	for k, v := range r.Header {
+		fmt.Fprintf(w, "%s: %s\n", k, v)
 	}
-
-	log.Printf("MessageId = %s\n", m.Message.ID)
-	log.Printf("Subscription = %s\n", m.Subscription)
-	log.Printf("Attributes\n")
-	for k, v := range m.Message.Attribute {
-		log.Printf("%s=%s\n", k, v)
-	}
-	log.Printf("Content\n---\n%s\n---\n", m.Message.Data)
-
+	fmt.Fprint(w, "body\n")
+	fmt.Fprint(w, string(body))
 	w.WriteHeader(http.StatusOK)
+	if r.Header.Get("content-type") != "" {
+		w.Header().Add("content-type", r.Header.Get("content-type"))
+	}
 }
